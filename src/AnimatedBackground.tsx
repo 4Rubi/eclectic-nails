@@ -8,49 +8,141 @@ const AnimatedBackground = () => {
 
   useEffect(() => {
     const generateItems = () => {
-      const newItems = [];
-      const canvasWidth = window.innerWidth * 2;
-      const canvasHeight = window.innerHeight * 2;
-      const attempts = 200; // Attempt to place 200 items
+      // Poisson-disc sampling implementation
+      const poissonDiscSampler = (width, height, minRadius, maxRadius, k) => {
+        const samples = [];
+        const activeSamples = [];
+        const grid = [];
+        const cellSize = Math.floor(minRadius / Math.sqrt(2));
+        const gridWidth = Math.ceil(width / cellSize);
+        const gridHeight = Math.ceil(height / cellSize);
 
-      for (let i = 0; i < attempts; i++) {
-        let isOverlapping = false;
-        const type = Math.random() > 0.3 ? "polaroid" : "sticker";
-        const size =
-          type === "polaroid"
-            ? Math.floor(Math.random() * 150) + 100 // Polaroid size between 100px and 250px
-            : Math.floor(Math.random() * 50) + 30; // Sticker size between 30px and 80px
+        for (let i = 0; i < gridWidth * gridHeight; i++) {
+          grid.push(null);
+        }
 
-        const item = {
-          id: i,
-          type,
-          x: Math.random() * (canvasWidth - size),
-          y: Math.random() * (canvasHeight - size),
-          rotation: Math.random() * 90 - 45,
-          scale: 1,
-          width: size,
-          height: type === "polaroid" ? size * 1.2 : size,
+        const addSample = (sample) => {
+          samples.push(sample);
+          activeSamples.push(sample);
+          const gridX = Math.floor(sample.x / cellSize);
+          const gridY = Math.floor(sample.y / cellSize);
+          grid[gridX + gridY * gridWidth] = sample;
         };
 
-        // Basic collision detection with overlap allowance
-        const overlapMargin = 100; // Allow 30px of overlap
-        for (const existingItem of newItems) {
-          if (
-            item.x < existingItem.x + existingItem.width - overlapMargin &&
-            item.x + item.width > existingItem.x + overlapMargin &&
-            item.y < existingItem.y + existingItem.height - overlapMargin &&
-            item.y + item.height > existingItem.y + overlapMargin
-          ) {
-            isOverlapping = true;
-            break;
+        // Start with a random sample
+        addSample({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          radius: Math.random() * (maxRadius - minRadius) + minRadius,
+        });
+
+        while (activeSamples.length > 0) {
+          const randomIndex = Math.floor(Math.random() * activeSamples.length);
+          const currentSample = activeSamples[randomIndex];
+
+          let found = false;
+          for (let i = 0; i < k; i++) {
+            const angle = Math.random() * 2 * Math.PI;
+            const radius =
+              Math.random() * currentSample.radius + currentSample.radius;
+            const newX = currentSample.x + Math.cos(angle) * radius;
+            const newY = currentSample.y + Math.sin(angle) * radius;
+            const newRadius =
+              Math.random() * (maxRadius - minRadius) + minRadius;
+
+            if (newX >= 0 && newX < width && newY >= 0 && newY < height) {
+              const gridX = Math.floor(newX / cellSize);
+              const gridY = Math.floor(newY / cellSize);
+              let tooClose = false;
+
+              for (let j = -2; j <= 2; j++) {
+                for (let l = -2; l <= 2; l++) {
+                  const neighborX = gridX + j;
+                  const neighborY = gridY + l;
+                  if (
+                    neighborX >= 0 &&
+                    neighborX < gridWidth &&
+                    neighborY >= 0 &&
+                    neighborY < gridHeight
+                  ) {
+                    const neighbor = grid[neighborX + neighborY * gridWidth];
+                    if (neighbor) {
+                      const dist = Math.hypot(
+                        newX - neighbor.x,
+                        newY - neighbor.y
+                      );
+                      if (dist < (newRadius + neighbor.radius) / 2) {
+                        tooClose = true;
+                        break;
+                      }
+                    }
+                  }
+                }
+                if (tooClose) break;
+              }
+
+              if (!tooClose) {
+                addSample({ x: newX, y: newY, radius: newRadius });
+                found = true;
+              }
+            }
+          }
+
+          if (!found) {
+            activeSamples.splice(randomIndex, 1);
           }
         }
+        return samples;
+      };
 
-        if (!isOverlapping) {
-          newItems.push(item);
+      const canvasWidth = window.innerWidth * 2;
+      const canvasHeight = window.innerHeight * 2;
+
+      // Generate points for polaroids using Poisson Disc Sampling
+      const polaroidPoints = poissonDiscSampler(
+        canvasWidth,
+        canvasHeight,
+        100,
+        250,
+        30
+      );
+
+      const polaroids = polaroidPoints.map((point, i) => ({
+        id: `p-${i}`,
+        type: "polaroid",
+        x: point.x,
+        y: point.y,
+        rotation: Math.random() * 90 - 45, // Increased rotation
+        scale: 1,
+        width: point.radius,
+        height: point.radius * 1.2,
+      }));
+
+      // Generate stickers near polaroids
+      const stickers = [];
+      polaroidPoints.forEach((point, i) => {
+        if (Math.random() > 0.5) {
+          // 50% chance to add a sticker near a polaroid
+          const size = Math.floor(Math.random() * 40) + 20;
+          const angle = Math.random() * 2 * Math.PI;
+          const dist = Math.random() * 100 + 50;
+          stickers.push({
+            id: `s-${i}`,
+            type: "sticker",
+            x: point.x + Math.cos(angle) * dist,
+            y: point.y + Math.sin(angle) * dist,
+            rotation: Math.random() * 90 - 45,
+            scale: 1,
+            width: size,
+            height: size,
+          });
         }
-      }
-      setItems(newItems);
+      });
+
+      const allItems = [...polaroids, ...stickers].sort(
+        () => Math.random() - 0.5
+      );
+      setItems(allItems);
     };
 
     generateItems();
