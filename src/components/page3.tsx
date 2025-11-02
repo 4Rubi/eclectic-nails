@@ -18,9 +18,6 @@ function Form() {
                                 <button className="text-2xl">
                                     <a href="https://www.instagram.com/EclecticNailsKe/">instagram</a>
                                 </button>
-                                <button className="text-2xl">
-                                    <a href="https://www.facebook.com//">whatsapp</a>
-                                </button>
                             </div>
                         </GlareHover>
                     </div>
