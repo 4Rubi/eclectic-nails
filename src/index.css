@@ -1,12 +1,6 @@
-@import url('https://fonts.googleapis.com/css2?family=Hanalei+Fill&family=Roboto:ital,wght@0,100..900;1,100..900&family=Special+Gothic+Expanded+One&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400..700&family=Indie+Flower&family=Quicksand:wght@300..700&family=Special+Gothic+Expanded+One&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 
 
-.root{
-  font: text-5xl font-bold;
-  color: #faf7f7;
-  font-size: 2em;
-  text-align: center;
-}
