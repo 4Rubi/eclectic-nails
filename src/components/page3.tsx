@@ -16,7 +16,7 @@ function Form() {
                         <GlareHover>
                             <div className="card bg-[#DD9AC2] rounded-lg shadow-md flex flex-col items-center justify-center">
                                 <button className="text-2xl">
-                                    <a href="https://www.instagram.com//">instagram</a>
+                                    <a href="https://www.instagram.com/EclecticNailsKe/">instagram</a>
                                 </button>
                                 <button className="text-2xl">
                                     <a href="https://www.facebook.com//">whatsapp</a>
